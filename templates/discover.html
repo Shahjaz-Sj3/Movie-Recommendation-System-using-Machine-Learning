@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Discover Movies</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- ================= NAVBAR ================= -->
+
+<div class="navbar">
+    <div class="logo">Cinescope+</div>
+
+    <div class="nav-right">
+    <a href="/" class="nav-link {% if active_page == 'home' %}active{% endif %}">Home</a>
+
+    {% if logged_in %}
+    <div class="user-dropdown">
+        <div class="avatar-circle nav-avatar">
+            {{ session.username[0] | upper }}
+        </div>
+
+        <div class="dropdown-menu">
+            <div class="dropdown-user">
+                {{ session.username }}
+            </div>
+
+            <a href="/profile" class="dropdown-item">Profile</a>
+            <a href="/logout" class="dropdown-item logout">Logout</a>
+        </div>
+    </div>
+    {% else %}
+        <a href="/login" class="nav-link">Login</a>
+        <a href="/register" class="nav-link">Register</a>
+    {% endif %}
+</div>
+</div>
+
+<!-- ================= PAGE WRAPPER ================= -->
+
+<div class="page-wrapper">
+
+    <div class="discover-container">
+
+        <!-- ===== Hero Title ===== -->
+
+        <div class="discover-hero">
+            <h1>
+                Discover <span>{{ value }}</span>
+            </h1>
+            <p>Browse movies by {{ category | capitalize }}</p>
+        </div>
+
+        <!-- ===== Results ===== -->
+
+        {% if results %}
+
+        <div class="movie-grid">
+            {% for movie in results %}
+
+            <div class="movie-card">
+                {% if movie.avg_rating %}
+<div class="rating-badge">
+    ⭐ {{ movie.avg_rating }}
+</div>
+{% endif %}
+
+                <img src="{{ movie.poster }}" loading="lazy">
+
+                <div class="movie-info">
+                    <div class="movie-title">
+                        {{ movie.title }}
+
+                        {% if movie.watched %}
+                        <span class="watched-badge">✔ Watched</span>
+                        {% endif %}
+                    </div>
+
+                    {% if logged_in and not movie.watched %}
+                    <form action="/mark_watched" method="post">
+                        <input type="hidden" name="movie_id" value="{{ movie.movie_id }}">
+                        <button class="watched-btn">Mark as Watched</button>
+                    </form>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            {% endfor %}
+        </div>
+
+        {% else %}
+
+        <div class="no-results">
+            <h3>No movies found</h3>
+            <p>Try exploring another category.</p>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+</body>
+</html>

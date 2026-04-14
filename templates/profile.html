@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Your Profile | Cinescope+</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<div class="navbar">
+    <div class="logo">Cinescope+</div>
+
+    <div class="nav-right">
+        <a href="/" class="nav-link">Home</a>
+
+        <div class="user-dropdown">
+            <div class="nav-avatar">
+                {{ session.username[0] | upper }}
+            </div>
+
+            <div class="dropdown-menu">
+                <div class="dropdown-user">
+                    {{ session.username }}
+                </div>
+                <a href="/profile" class="dropdown-item">Profile</a>
+                <a href="/logout" class="dropdown-item logout">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= PROFILE DASHBOARD ================= -->
+<div class="page-wrapper">
+<div class="profile-dashboard">
+
+    <!-- HEADER -->
+    <div class="profile-header">
+        <div class="avatar-circle">
+            {{ session.username[0] | upper }}
+        </div>
+
+        <div>
+            <h2>{{ session.username }}</h2>
+            <div class="profile-sub">
+                Your personalized movie space
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= STATS ================= -->
+    <div class="stats-row">
+
+        <div class="stat-card" onclick="toggleSection('watchedSection', this)">
+            <h3>{{ watched_count }}</h3>
+            <p>Movies Watched</p>
+        </div>
+
+        <div class="stat-card" onclick="toggleSection('ratedSection', this)">
+            <h3>{{ ratings_count }}</h3>
+            <p>Ratings Given</p>
+        </div>
+
+        <div class="stat-card" onclick="toggleSection('reviewedSection', this)">
+            <h3>{{ reviews_count }}</h3>
+            <p>Reviews Written</p>
+        </div>
+
+    </div>
+
+    <!-- ================= WATCHED ================= -->
+    <div id="watchedSection" class="hidden-section">
+        <h3>Watched Movies</h3>
+
+        {% if watched %}
+        <div class="watched-grid">
+            {% for movie in watched %}
+            <div class="watched-card"
+                 onclick="openModal('{{ movie }}')">
+                🎬 {{ movie }}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-text">No watched movies yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- ================= RATED ================= -->
+    <div id="ratedSection" class="hidden-section">
+        <h3>Your Ratings</h3>
+
+        {% if rated %}
+        <div class="watched-grid">
+            {% for title, rating in rated %}
+            <div class="watched-card">
+                ⭐ {{ rating }} — {{ title }}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-text">No ratings yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- ================= REVIEWED ================= -->
+    <div id="reviewedSection" class="hidden-section">
+        <h3>Your Reviews</h3>
+
+        {% if reviewed %}
+        <div class="watched-grid">
+            {% for title, review in reviewed %}
+            <div class="watched-card">
+                <strong>{{ title }}</strong><br>
+                "{{ review }}"
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-text">No reviews yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- ================= TASTE SUMMARY ================= -->
+    <div class="section-block">
+        <h3 class="section-title">🎯 Your Taste Summary</h3>
+
+        {% if taste.genres %}
+        <div class="taste-section">
+            <p>Top Genres</p>
+            <div class="chip-group">
+                {% for g in taste.genres %}
+                <span class="chip">{{ g }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if taste.actors %}
+        <div class="taste-section">
+            <p>Favorite Actors</p>
+            <div class="chip-group">
+                {% for a in taste.actors %}
+                <span class="chip">{{ a }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if taste.directors %}
+        <div class="taste-section">
+            <p>Favorite Directors</p>
+            <div class="chip-group">
+                {% for d in taste.directors %}
+                <span class="chip">{{ d }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ================= TASTE CHART ================= -->
+    {% if taste.genres %}
+    <div style="margin-top:40px;">
+        <h3 class="section-title">📊 Taste Visualization</h3>
+        <canvas id="tasteChart" height="120"></canvas>
+    </div>
+    {% endif %}
+
+</div>
+</div>
+
+<!-- ================= RATE MODAL ================= -->
+<div id="rateModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle"></h3>
+
+        <form action="/rate_and_review" method="post">
+            <input type="hidden" name="movie_id" id="modalMovie">
+
+            <select name="rating" required>
+                <option value="">Rate movie</option>
+                <option value="1">⭐</option>
+                <option value="2">⭐⭐</option>
+                <option value="3">⭐⭐⭐</option>
+                <option value="4">⭐⭐⭐⭐</option>
+                <option value="5">⭐⭐⭐⭐⭐</option>
+            </select>
+
+            <textarea name="review"
+                      rows="3"
+                      placeholder="Write a review (optional)"></textarea>
+
+            <button type="submit" class="primary-btn">Save</button>
+            <button type="button"
+                    onclick="closeModal()"
+                    class="secondary-btn">
+                Cancel
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ================= SCRIPTS ================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+function toggleSection(id, element) {
+    const section = document.getElementById(id);
+    const cards = document.querySelectorAll(".stat-card");
+
+    cards.forEach(card => card.classList.remove("active"));
+
+    if (section.classList.contains("active")) {
+        section.classList.remove("active");
+        element.classList.remove("active");
+    } else {
+        document.querySelectorAll(".hidden-section")
+            .forEach(sec => sec.classList.remove("active"));
+
+        section.classList.add("active");
+        element.classList.add("active");
+    }
+}
+
+function openModal(movieTitle) {
+    document.getElementById("modalMovie").value = movieTitle;
+    document.getElementById("modalTitle").innerText = movieTitle;
+    document.getElementById("rateModal").style.display = "flex";
+}
+
+function closeModal() {
+    document.getElementById("rateModal").style.display = "none";
+}
+</script>
+
+{% if taste.genres and taste.genre_counts %}
+<script id="taste-data" type="application/json">
+{
+  "genres": {{ taste.genres | tojson }},
+  "counts": {{ taste.genre_counts | tojson }}
+}
+</script>
+{% endif %}
+
+<script>
+const dataElement = document.getElementById("taste-data");
+
+if (dataElement) {
+    const tasteData = JSON.parse(dataElement.textContent);
+    const ctx = document.getElementById('tasteChart');
+
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: tasteData.genres,
+                datasets: [{
+                    label: 'Top Genres',
+                    data: tasteData.counts
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { display: false }
+                }
+            }
+        });
+    }
+}
+</script>
+
+</body>
+</html>

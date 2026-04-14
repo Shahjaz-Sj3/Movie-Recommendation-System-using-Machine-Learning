@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recommendations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<div class="home-container">
+    <div class="back-container">
+        <a href="/" class="back-btn">← Back</a>
+    </div>
+</div>
+<h2>Recommendations for "{{ movie }}"</h2>
+
+{% if recommendations %}
+<div class="movie-grid">
+
+{% for rec in recommendations %}
+<div class="movie-card">
+    {% if movie.avg_rating %}
+<div class="rating-badge">
+    ⭐ {{ movie.avg_rating }}
+</div>
+{% endif %}
+    <img src="{{ rec.poster }}" loading="lazy">
+
+    <div class="movie-info">
+        <div class="movie-title">{{ rec.title }}</div>
+
+        {% if logged_in %}
+        <form action="/mark_watched" method="post">
+            <input type="hidden" name="movie_id" value="{{ rec.movie_id }}">
+            <button class="watched-btn">
+                            Mark as Watched
+                        </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+</div>
+{% else %}
+<p>No recommendations found.</p>
+{% endif %}
+
+</body>
+</html>

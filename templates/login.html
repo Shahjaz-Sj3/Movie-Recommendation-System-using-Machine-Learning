@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Login | Cinescope+</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- ================= NAVBAR ================= -->
+
+<div class="navbar">
+    <div class="logo">Cinescope+</div>
+
+    <div class="nav-right">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/login" class="nav-link active">Login</a>
+        <a href="/register" class="nav-link">Register</a>
+    </div>
+</div>
+
+<!-- ================= LOGIN WRAPPER ================= -->
+
+<div class="auth-wrapper">
+
+    <div class="auth-container">
+
+        <h2>Welcome Back</h2>
+        <p class="auth-sub">Sign in to continue discovering movies</p>
+
+        <form method="post">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+
+            <button type="submit">Sign In</button>
+        </form>
+
+        <div class="auth-footer">
+            New to Cinescope+?
+            <a href="/register">Create an account</a>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

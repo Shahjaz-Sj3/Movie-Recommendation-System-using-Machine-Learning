@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cinescope+ | Smart Movie Recommendations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+
+<div class="navbar">
+    <div class="logo">Cinescope+</div>
+
+    <div class="nav-right">
+        <a href="/" class="nav-link {% if active_page == 'home' %}active{% endif %}">Home</a>
+
+        {% if logged_in %}
+        <div class="user-dropdown">
+            <div class="avatar-circle nav-avatar">
+                {{ session.username[0] | upper }}
+            </div>
+
+            <div class="dropdown-menu">
+                <div class="dropdown-user">
+                    {{ session.username }}
+                </div>
+
+                <a href="/profile" class="dropdown-item">Profile</a>
+                <a href="/logout" class="dropdown-item logout">Logout</a>
+            </div>
+        </div>
+        {% else %}
+            <a href="/login" class="nav-link">Login</a>
+            <a href="/register" class="nav-link">Register</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ================= HERO SECTION ================= -->
+
+<div class="page-wrapper">
+
+    <div class="home-container">
+        <!-- ================= SEARCH ================= -->
+
+        <div class="search-container">
+            <form action="/recommend_ui" method="get" class="search-form">
+                <input
+                    type="text"
+                    name="movie"
+                    id="movie-search"
+                    placeholder="Search for a movie..."
+                    list="movie-suggestions"
+                    autocomplete="on"
+                    required
+                >
+
+                <datalist id="movie-suggestions"></datalist>
+
+                <button type="submit" class="recommend-btn">
+                    Search
+                </button>
+            </form>
+        </div>
+
+        <!-- ================= DISCOVER ================= -->
+
+        <div class="discover-bar">
+            <span>Discover:</span>
+
+            <a href="/discover?category=genres&value=Action">Action</a>
+            <a href="/discover?category=genres&value=Drama">Drama</a>
+            <a href="/discover?category=genres&value=Comedy">Comedy</a>
+            <a href="/discover?category=genres&value=Sci-Fi">Sci-Fi</a>
+        </div>
+
+        <!-- ================= RECOMMENDED ================= -->
+{% if seed_movie %}
+<p class="because-text">
+Recommended based on your watching history
+</p>
+{% endif %}
+        {% if for_you %}
+        <h2 class="section-title center">
+            Recommended For You
+        </h2>
+
+        <div class="movie-grid">
+            {% for movie in for_you %}
+            <div class="movie-card">
+                {% if movie.avg_rating %}
+<div class="rating-badge">
+    ⭐ {{ movie.avg_rating }}
+</div>
+{% endif %}
+
+                <img src="{{ movie.poster }}" loading="lazy">
+
+                <div class="movie-info">
+                    <div class="movie-title">
+                        {{ movie.title }}
+
+                        {% if movie.watched %}
+                            <span class="watched-badge">✔ Watched</span>
+                        {% endif %}
+                    </div>
+                    <div class="confidence">
+    🎯 <span>{{ movie.confidence }}%</span> Match
+</div>
+
+
+                    {% if session.get("user_id") and not movie.watched %}
+                    <form action="/mark_watched" method="post">
+                        <input type="hidden" name="movie_id" value="{{ movie.movie_id }}">
+                        <button class="watched-btn">
+                            Mark as Watched
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
+<!-- ================= AUTOCOMPLETE SCRIPT ================= -->
+
+<script>
+const input = document.getElementById("movie-search");
+const datalist = document.getElementById("movie-suggestions");
+
+input.addEventListener("input", async () => {
+    const query = input.value;
+
+    if (query.length < 2) {
+        datalist.innerHTML = "";
+        return;
+    }
+
+    const response = await fetch(`/autocomplete?q=${query}`);
+    const movies = await response.json();
+
+    datalist.innerHTML = "";
+    movies.forEach(movie => {
+        const option = document.createElement("option");
+        option.value = movie;
+        datalist.appendChild(option);
+    });
+});
+</script>
+
+</body>
+</html>
