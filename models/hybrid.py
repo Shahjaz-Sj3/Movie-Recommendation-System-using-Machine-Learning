@@ -7,8 +7,7 @@ def hybrid_recommendation(movie_title, user_id=None, top_n=10):
 
     # Get results
     content_results = content_recommend(movie_title, top_n=top_n * 2)
-    dl_results = recommend_movies_dl(movie_title, top_n=top_n * 2)
-
+    dl_results = []
     if user_id:
         cf_results = recommend_movies_cf(user_id, top_n=top_n)
     else:
