@@ -30,9 +30,6 @@ tfidf = TfidfVectorizer(
 
 tfidf_matrix = tfidf.fit_transform(df["combined_features"])
 
-# Precompute cosine similarity for fast lookups.
-cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
-
 # Map titles to indices in a case-insensitive way.
 indices = pd.Series(df.index, index=df["title"].str.lower()).drop_duplicates()
 
@@ -47,7 +44,11 @@ def recommend_movies(title, top_n=10):
         return []
 
     idx = indices[key]
-    scores = list(enumerate(cosine_sim[idx]))
+    similarities = cosine_similarity(
+        tfidf_matrix[idx],
+        tfidf_matrix
+        ).flatten()
+    scores = list(enumerate(similarities))
     scores = sorted(scores, key=lambda x: x[1], reverse=True)
 
     # Skip the queried movie itself.
