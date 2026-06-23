@@ -56,6 +56,11 @@
                     required
                 >
 
+                <select name="mode" class="mode-select">
+                    <option value="hybrid">Hybrid</option>
+                    <option value="content">Content-Based</option>
+                </select>
+
                 <datalist id="movie-suggestions"></datalist>
 
                 <button type="submit" class="recommend-btn">
@@ -73,6 +78,9 @@
             <a href="/discover?category=genres&value=Drama">Drama</a>
             <a href="/discover?category=genres&value=Comedy">Comedy</a>
             <a href="/discover?category=genres&value=Sci-Fi">Sci-Fi</a>
+            {% if logged_in %}
+            <a href="/watchlist">Watchlist</a>
+            {% endif %}
         </div>
 
         <!-- ================= RECOMMENDED ================= -->

@@ -4,6 +4,7 @@ import hashlib
 import pandas as pd
 import requests
 
+from models.content_based import recommend_movies as content_recommend
 from models.hybrid import hybrid_recommendation
 
 
@@ -22,6 +23,23 @@ def get_db():
     return sqlite3.connect("database.db")
 
 
+def init_db():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS watchlist (
+            user_id INTEGER,
+            movie_id INTEGER,
+            PRIMARY KEY (user_id, movie_id)
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+init_db()
+
+
 # ---------------- MOVIE HELPERS ----------------
 def get_movie_id(title):
     conn = get_db()
@@ -30,6 +48,39 @@ def get_movie_id(title):
     row = cur.fetchone()
     conn.close()
     return row[0] if row else None
+
+
+def get_movie_title(movie_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT title FROM movies WHERE movie_id=?", (movie_id,))
+    row = cur.fetchone()
+    conn.close()
+    return row[0] if row else None
+
+
+def is_in_watchlist(user_id, movie_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT 1 FROM watchlist WHERE user_id=? AND movie_id=?",
+        (user_id, movie_id)
+    )
+    result = cur.fetchone()
+    conn.close()
+    return result is not None
+
+
+def get_watchlist_titles(user_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT m.movie_id, m.title FROM watchlist w JOIN movies m ON w.movie_id = m.movie_id WHERE w.user_id = ?",
+        (user_id,)
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return rows
 
 
 def is_watched(user_id, movie_id):
@@ -341,37 +392,48 @@ def recommend_ui():
     if not movie_title:
         return redirect("/")
 
+    mode = request.args.get("mode", "hybrid")
     user_id = session.get("user_id")
 
-    raw_recs = hybrid_recommendation(
-        movie_title=movie_title,
-        user_id=user_id,
-        top_n=30
-    )
+    if mode == "content":
+        raw_recs = content_recommend(movie_title, top_n=30)
+    else:
+        raw_recs = hybrid_recommendation(
+            movie_title=movie_title,
+            user_id=user_id,
+            top_n=30
+        )
 
     recommendations = []
+    count = 0
 
-    for title,score in raw_recs:
+    for item in raw_recs:
+        title = item[0] if isinstance(item, tuple) else item
         movie_id = get_movie_id(title)
+        if not movie_id:
+            continue
 
         if user_id and is_watched(user_id, movie_id):
             continue
 
         recommendations.append({
-    "title": title,
-    "poster": get_movie_poster(title),
-    "movie_id": movie_id,
-    "avg_rating": get_average_rating(movie_id)
-})
+            "title": title,
+            "poster": get_movie_poster(title),
+            "movie_id": movie_id,
+            "avg_rating": get_average_rating(movie_id),
+            "watchlist": is_in_watchlist(user_id, movie_id) if user_id else False
+        })
 
-        if len(recommendations) == 10:
+        count += 1
+        if count == 10:
             break
 
     return render_template(
         "results.html",
         movie=movie_title,
         recommendations=recommendations,
-        logged_in=("user_id" in session)
+        logged_in=("user_id" in session),
+        mode=mode
     )
 
 
@@ -392,6 +454,74 @@ def mark_watched():
         INSERT OR IGNORE INTO watched_movies (user_id, movie_id)
         VALUES (?, ?)
     """, (user_id, movie_id))
+    conn.commit()
+    conn.close()
+
+    return redirect(request.referrer or "/")
+
+
+# ---------------- WATCHLIST ----------------
+@app.route("/watchlist")
+def watchlist():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+    watchlist_rows = get_watchlist_titles(user_id)
+    movies = []
+
+    for movie_id, title in watchlist_rows:
+        movies.append({
+            "movie_id": movie_id,
+            "title": title,
+            "poster": get_movie_poster(title),
+            "avg_rating": get_average_rating(movie_id),
+            "watched": is_watched(user_id, movie_id),
+            "watchlist": True
+        })
+
+    return render_template(
+        "watchlist.html",
+        movies=movies,
+        logged_in=True,
+        active_page="watchlist"
+    )
+
+
+@app.route("/add_to_watchlist", methods=["POST"])
+def add_to_watchlist():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+    movie_id = request.form["movie_id"]
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT OR IGNORE INTO watchlist (user_id, movie_id) VALUES (?, ?)",
+        (user_id, movie_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return redirect(request.referrer or "/")
+
+
+@app.route("/remove_from_watchlist", methods=["POST"])
+def remove_from_watchlist():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+    movie_id = request.form["movie_id"]
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM watchlist WHERE user_id=? AND movie_id=?",
+        (user_id, movie_id)
+    )
     conn.commit()
     conn.close()
 
@@ -675,7 +805,18 @@ def recommend_api():
     return jsonify(hybrid_recommendation(request.args.get("movie")))
 
 
+@app.route("/recommend_content")
+def recommend_content_api():
+    movie_title = request.args.get("movie")
+    if not movie_title:
+        return jsonify([])
+
+    recommendations = content_recommend(movie_title, top_n=10)
+    return jsonify(recommendations)
+
+
 # ---------------- RUN ----------------
+
 if __name__ == "__main__":
     app.run(debug=True)
 

@@ -18,9 +18,9 @@
 
 {% for rec in recommendations %}
 <div class="movie-card">
-    {% if movie.avg_rating %}
+    {% if rec.avg_rating %}
 <div class="rating-badge">
-    ⭐ {{ movie.avg_rating }}
+    ⭐ {{ rec.avg_rating }}
 </div>
 {% endif %}
     <img src="{{ rec.poster }}" loading="lazy">
@@ -29,12 +29,24 @@
         <div class="movie-title">{{ rec.title }}</div>
 
         {% if logged_in %}
-        <form action="/mark_watched" method="post">
-            <input type="hidden" name="movie_id" value="{{ rec.movie_id }}">
-            <button class="watched-btn">
-                            Mark as Watched
-                        </button>
-        </form>
+        <div class="button-row">
+            <form action="/mark_watched" method="post">
+                <input type="hidden" name="movie_id" value="{{ rec.movie_id }}">
+                <button class="watched-btn" type="submit">Mark as Watched</button>
+            </form>
+
+            {% if rec.watchlist %}
+            <form action="/remove_from_watchlist" method="post">
+                <input type="hidden" name="movie_id" value="{{ rec.movie_id }}">
+                <button class="secondary-btn" type="submit">Remove from Watchlist</button>
+            </form>
+            {% else %}
+            <form action="/add_to_watchlist" method="post">
+                <input type="hidden" name="movie_id" value="{{ rec.movie_id }}">
+                <button class="secondary-btn" type="submit">Add to Watchlist</button>
+            </form>
+            {% endif %}
+        </div>
         {% endif %}
     </div>
 </div>

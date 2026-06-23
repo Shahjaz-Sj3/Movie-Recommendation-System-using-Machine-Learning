@@ -151,6 +151,17 @@ body {
     font-size: 16px;
 }
 
+.mode-select {
+    width: 140px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 8px;
+    padding: 0 10px;
+    color: white;
+    background: rgba(255,255,255,0.08);
+    font-size: 14px;
+}
+
 .search-form input::placeholder {
     color: #888;
 }
@@ -169,6 +180,31 @@ body {
 
 .recommend-btn:hover {
     background: linear-gradient(90deg, #ff1e2d, #c40812);
+}
+
+.secondary-btn,
+.remove-btn {
+    margin-left: 12px;
+    padding: 10px 14px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.secondary-btn:hover,
+.remove-btn:hover {
+    background: rgba(255,255,255,0.14);
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
 }
 
 /* =====================================================
