@@ -3,16 +3,20 @@ import sqlite3
 import hashlib
 import pandas as pd
 import requests
+import os
+from dotenv import load_dotenv
+
+
 
 from models.content_based import recommend_movies as content_recommend
 from models.hybrid import hybrid_recommendation
 
 
-# ---------------- CONFIG ----------------
-TMDB_API_KEY = "0c0e253b12a8c1545709407b73daecb6"
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "dev_secret_key"
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+app.secret_key = os.getenv("SECRET_KEY")
 
 print("Loading movie dataset into memory...")
 MOVIES_DF = pd.read_csv("data/processed_movies.csv")
@@ -747,7 +751,7 @@ import requests
 import urllib.parse
 import sqlite3
 
-TMDB_API_KEY = "0c0e253b12a8c1545709407b73daecb6"
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 
 
 def get_movie_poster(title):
