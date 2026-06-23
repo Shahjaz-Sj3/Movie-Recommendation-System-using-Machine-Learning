@@ -1,6 +1,6 @@
 from models.content_based import recommend_movies as content_recommend
 from models.collaborative import recommend_movies_cf
-#from models.dl_recommender import recommend_movies_dl
+from models.dl_recommender import recommend_movies_dl
 
 
 def hybrid_recommendation(movie_title, user_id=None, top_n=10):
