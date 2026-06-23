@@ -19,7 +19,10 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 app.secret_key = os.getenv("SECRET_KEY")
 
 print("Loading movie dataset into memory...")
-MOVIES_DF = pd.read_csv("data/processed_movies.csv")
+MOVIES_DF = pd.read_csv(
+    "data/processed_movies.csv",
+    usecols=["title", "genres", "cast", "director"]
+)
 print("Dataset loaded.")
 
 # ---------------- DATABASE HELPER ----------------
